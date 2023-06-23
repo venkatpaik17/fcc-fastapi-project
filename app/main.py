@@ -1,6 +1,6 @@
 import time
 from random import randrange
-from typing import Optional
+from typing import List, Optional
 
 import psycopg2
 from fastapi import Body, Depends, FastAPI, HTTPException, Response, status
@@ -71,19 +71,20 @@ def root():
     return {"message": "Hello World!"}
 
 
-@app.get("/posts")  # getting all posts
+# getting all posts, since we are getting list of posts, we type it as List[schemas.Post] for the pydantic to parse and shape it properly
+# just using schemas.Post will make the pydantic to shape the list of posts as a single post and hence error
+@app.get("/posts", response_model=List[schemas.Post])
 def get_all_posts(db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts;""")
     # all_posts = cursor.fetchall()  # fetch all posts from the query
     # print(all_posts)
     all_posts = db.query(models.Post).all()
-    return {"data": all_posts}
+    return all_posts
 
 
-@app.post(
-    "/posts", status_code=status.HTTP_201_CREATED
-)  # creating a new post, deafult status code
-def create_posts(post: schemas.Post, db: Session = Depends(get_db)):
+# creating a new post, deafult status code
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     """INSERT INTO posts (p_title, p_content, published) VALUES (%s, %s, %s) RETURNING *""",
     #     (post.title, post.content, post.published),
@@ -95,14 +96,16 @@ def create_posts(post: schemas.Post, db: Session = Depends(get_db)):
     # new_post = models.Post(
     #     p_title=post.title, p_content=post.content, published=post.published
     # )
-    new_post = models.Post(**post.dict())
+    new_post = models.Post(
+        **post.dict()
+    )  # creating an instance of Post class in models module
     db.add(new_post)
     db.commit()
     db.refresh(new_post)  # retrieve the created post
-    return {"data": new_post}
+    return new_post
 
 
-@app.get("/posts/{id}")  # get a specific post
+@app.get("/posts/{id}", response_model=schemas.Post)  # get a specific post
 def get_post(id: int, db: Session = Depends(get_db)):  # tweak the response
     # cursor.execute(
     #     """SELECT * FROM posts WHERE p_id = %s""", (str(id),)
@@ -115,7 +118,7 @@ def get_post(id: int, db: Session = Depends(get_db)):  # tweak the response
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found",
         )
-    return {"data": specific_post}
+    return specific_post
 
 
 @app.delete(
@@ -141,8 +144,8 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{id}")  # update a specific post using PUT
-def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
+@app.put("/posts/{id}", response_model=schemas.Post)  # update a specific post using PUT
+def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     """UPDATE posts SET p_title = %s, p_content = %s WHERE p_id = %s RETURNING *""",
     #     (post.title, post.content, str(id)),
@@ -163,7 +166,4 @@ def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
     db.commit()
 
     # query to get the updated post
-    return {
-        "message": f"Post with id: {id} updated successfully",
-        "data": updated_post_query.first(),
-    }
+    return updated_post_query.first()

@@ -1,3 +1,4 @@
+# ORM models for columns definition of the DB tables
 # using Base class from database.py
 from sqlalchemy import TIMESTAMP, Boolean, Column, Integer, String, text, true
 
