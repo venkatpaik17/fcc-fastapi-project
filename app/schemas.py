@@ -1,5 +1,6 @@
 # schemas/pydantic models for request and response structure
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
@@ -24,15 +25,15 @@ class Post(PostBase):  # model for posts response
 
 
 # Models for Users
-class UserBase(BaseModel):
+class UserBase(BaseModel):  # base model for users entity
     u_email: EmailStr  # email validator
 
 
-class UserCreate(UserBase):
+class UserCreate(UserBase):  # model for create/update user request
     u_password: str
 
 
-class User(UserBase):
+class User(UserBase):  # model for user response
     u_id: int
     created_at: datetime
 
@@ -40,5 +41,16 @@ class User(UserBase):
         orm_mode = True
 
 
-class UserLogin(UserCreate):
+class UserLogin(UserCreate):  # model for user login request
     pass
+
+
+# model for generated token
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+# model for payload data extracted from token during token verification
+class TokenData(BaseModel):
+    u_id: Optional[int] = None
