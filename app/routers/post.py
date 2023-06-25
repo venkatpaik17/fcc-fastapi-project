@@ -29,14 +29,14 @@ def create_posts(
     db: Session = Depends(get_db),
     user_id: schemas.TokenData = Depends(oauth2.get_current_user),
 ):
-    print(user_id)
     # if we have very large number of columns, it is tiresome to extract fields like this so convert the request to dict and unpack it.
     # new_post = models.Post(
     #     p_title=post.title, p_content=post.content, published=post.published
     # )
 
+    # from token data get id of the logged in user and add it as owner_id in posts table for this new post
     # creating an instance of Post class in models module
-    new_post = models.Post(**post.dict())
+    new_post = models.Post(owner_id=user_id.u_id, **post.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)  # retrieve the created post
@@ -68,12 +68,17 @@ def delete_post(
 ):
     # this is the query to get the post wrt to id
     deleted_post_query = db.query(models.Post).filter(models.Post.p_id == id)
-    if not deleted_post_query.first():  # here we check if the post is found or not
+    post_to_be_deleted = deleted_post_query.first()
+    if not post_to_be_deleted:  # here we check if the post is found or not
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {id} doesn't exist",
         )
-
+    if post_to_be_deleted.owner_id != user_id.u_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Not authorized to perform the requested action",
+        )
     # here we call delete function on the post query to delete the post with id
     deleted_post_query.delete(synchronize_session=False)
     db.commit()
@@ -91,10 +96,16 @@ def update_post(
 ):
     # this is the query to get the post wrt to id
     updated_post_query = db.query(models.Post).filter(models.Post.p_id == id)
-    if not updated_post_query.first():  # here we check if the post is found or not
+    post_to_be_updated = updated_post_query.first()
+    if not post_to_be_updated:  # here we check if the post is found or not
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {id} not found",
+        )
+    if post_to_be_updated.owner_id != user_id.u_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Not authorized to perform the requested action",
         )
 
     # call update function on query and pass request body to update the fields
