@@ -1,11 +1,7 @@
-from dotenv import load_dotenv
 from pydantic import BaseSettings
 
-# load the environment variables
-load_dotenv()
 
-
-# this a settings class which takes care of env variables (either from .env or environment)
+# this a settings class which takes care of env variables (reads both environment variables and vales from dotenv file)
 class Settings(BaseSettings):
     database_username: str
     database_password: str
@@ -17,10 +13,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int
 
     class Config:
-        env_file: ".env"
-        # env_file_encoding = "utf-8"
+        env_file = ".env"  # get env variables from .env file
+        env_file_encoding = "utf-8"
 
 
 settings = Settings()
-
 # print(settings.access_token_expire_minutes)
