@@ -7,6 +7,7 @@ from .routers import auth, post, user
 # connection is established and tables are created
 models.Base.metadata.create_all(bind=engine)
 
+# creating a fastapi instance
 app = FastAPI()
 
 

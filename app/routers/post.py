@@ -74,6 +74,7 @@ def delete_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {id} doesn't exist",
         )
+    # check to make sure the post is deleted by its owner only.
     if post_to_be_deleted.owner_id != user_id.u_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -102,6 +103,7 @@ def update_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {id} not found",
         )
+    # check to make sure the post is updated by owner only.
     if post_to_be_updated.owner_id != user_id.u_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

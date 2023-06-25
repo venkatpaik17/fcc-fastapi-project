@@ -2,7 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "postgresql://vpk:vpk123#@localhost/fcc-fastapi"  # db url to connect, bad practice of hardcoding
+from . import config
+
+# SQLALCHEMY_DATABASE_URL = "postgresql://vpk:vpk123#@localhost/fcc-fastapi"  # db url to connect, bad practice of hardcoding
+
+# use env variables
+SQLALCHEMY_DATABASE_URL = f"postgresql://{config.settings.database_username}:{config.settings.database_password}@{config.settings.database_hostname}:{config.settings.database_port}/{config.settings.database_name}"
 
 # engine is responsible for sqlalchemy to connect to a DB
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
