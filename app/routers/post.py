@@ -16,8 +16,19 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 def get_all_posts(
     db: Session = Depends(get_db),
     user_id: schemas.TokenData = Depends(oauth2.get_current_user),
+    limit: int = 2,
+    skip: int = 0,
+    search: str = "",
 ):
-    all_posts = db.query(models.Post).all()
+    all_posts = (
+        db.query(models.Post)
+        .filter(
+            models.Post.p_title.contains(search)
+        )  # can use any str function here to get desired the response
+        .limit(limit)
+        .offset(skip)
+        .all()
+    )
     return all_posts
 
 

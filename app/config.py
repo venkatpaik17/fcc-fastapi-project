@@ -1,5 +1,7 @@
 from pydantic import BaseSettings
 
+# import os
+
 
 # this a settings class which takes care of env variables (reads both environment variables and vales from dotenv file)
 class Settings(BaseSettings):
@@ -19,3 +21,4 @@ class Settings(BaseSettings):
 
 settings = Settings()
 # print(settings.access_token_expire_minutes)
+# print(os.environ.get("database_name"))    # returns None, because pydantic with dotenv does not set env variables mentioned in .env file. It just reads it.

@@ -43,7 +43,7 @@ class Post(PostBase):  # model for posts response
     owner_id: int  # this is added here instead of PostBase because we don't want user to explicitly add owner_id, request logic should handle it.
     owner: User  # the user ORM model we get from relationship ORM operation is parsed as pydantic/schema model
 
-    class Config:  # pydantic model will read ORM model data too since pydantic reads only dict
+    class Config:  # setting orm_mode as True. pydantic model will read ORM model data too since pydantic reads only dict
         orm_mode = True
 
 
