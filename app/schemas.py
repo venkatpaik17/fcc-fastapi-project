@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, StrictBool
 
 
 # Models for Users
@@ -47,6 +47,15 @@ class Post(PostBase):  # model for posts response
         orm_mode = True
 
 
+# model for updated posts response with votes
+class PostOut(BaseModel):
+    Post: Post  # getting all fileds from Post model
+    votes: int
+
+    class Config:
+        orm_mode = True
+
+
 # model for generated token
 class Token(BaseModel):
     access_token: str
@@ -56,3 +65,9 @@ class Token(BaseModel):
 # model for payload data extracted from token during token verification
 class TokenData(BaseModel):
     u_id: Optional[int] = None
+
+
+# model for adding/removing a vote
+class VoteCreate(BaseModel):
+    post_id: int
+    dir: StrictBool

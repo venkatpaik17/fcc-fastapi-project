@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
+# ORM model for Post
 class Post(Base):
     __tablename__ = "posts"
 
@@ -25,6 +26,7 @@ class Post(Base):
     owner = relationship("User")
 
 
+# ORM model for User
 class User(Base):
     __tablename__ = "users"
     u_id = Column(Integer, primary_key=True, nullable=False)
@@ -32,4 +34,15 @@ class User(Base):
     u_password = Column(String, nullable=False)
     created_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+
+
+# ORM model for Vote
+class Vote(Base):
+    __tablename__ = "votes"
+    post_id = Column(
+        Integer, ForeignKey("posts.p_id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id = Column(
+        Integer, ForeignKey("users.u_id", ondelete="CASCADE"), primary_key=True
     )

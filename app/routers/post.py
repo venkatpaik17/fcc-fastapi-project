@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models, oauth2, schemas
@@ -12,24 +13,43 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 # getting all posts, since we are getting list of posts, we type it as List[schemas.Post] for the pydantic to parse and shape it properly
 # just using schemas.Post will make the pydantic to shape the list of posts as a single post and hence error
-@router.get("/", response_model=List[schemas.Post])
+@router.get(
+    "/", response_model=List[schemas.PostOut]
+)  # schemas.Post as response_model if posts without votes
 def get_all_posts(
     db: Session = Depends(get_db),
     user_id: schemas.TokenData = Depends(oauth2.get_current_user),
-    limit: int = 2,
+    limit: int = 3,
     skip: int = 0,
     search: str = "",
 ):
+    # getting all posts without votes
+    # all_posts = (
+    #     db.query(models.Post)
+    #     .filter(
+    #         models.Post.p_title.contains(search)
+    #     )  # can use any str function here to get desired the response
+    #     .limit(limit)
+    #     .offset(skip)
+    #     .all()
+    # )
+
+    # get all posts with votes
+    # join posts and votes table, group by post id and get number of votes for each post using count function
+    # by default sqlalchemy performs inner join
+    # SELECT posts.*, COUNT(votes.post_id) as No_of_votes FROM posts LEFT JOIN votes ON posts.p_id = votes.post_id GROUP BY posts.p_id;
     all_posts = (
-        db.query(models.Post)
-        .filter(
-            models.Post.p_title.contains(search)
-        )  # can use any str function here to get desired the response
+        (
+            db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
+            .join(models.Vote, models.Post.p_id == models.Vote.post_id, isouter=True)
+            .group_by(models.Post.p_id)
+        )
+        .filter(models.Post.p_title.contains(search))
         .limit(limit)
         .offset(skip)
         .all()
     )
-    return all_posts
+    return all_posts  # response format is slightly different so we need to change the response model in schemas.py and update response_model parameter
 
 
 # creating a new post, deafult status code
@@ -55,13 +75,27 @@ def create_posts(
 
 
 # get a specific post, tweak the response
-@router.get("/{id}", response_model=schemas.Post)
+@router.get(
+    "/{id}", response_model=schemas.PostOut
+)  # schemas.Post as response_model if posts without votes
 def get_post(
     id: int,
     db: Session = Depends(get_db),
     user_id: schemas.TokenData = Depends(oauth2.get_current_user),
 ):
-    specific_post = db.query(models.Post).filter(models.Post.p_id == id).first()
+    # get specific post without votes
+    # specific_post = db.query(models.Post).filter(models.Post.p_id == id).first()
+
+    # get specific post with votes (join, groupby, count)
+    specific_post = (
+        (
+            db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
+            .join(models.Vote, models.Post.p_id == models.Vote.post_id, isouter=True)
+            .group_by(models.Post.p_id)
+        )
+        .filter(models.Post.p_id == id)
+        .first()
+    )
     if not specific_post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
