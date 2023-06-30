@@ -1,0 +1,14 @@
+[Unit]
+Description=FastAPI project app from FCC
+After=network.target
+
+[Service]
+WorkingDirectory=/home/venkat/Desktop/fcc_fastapi
+User=venkat
+Group=venkat
+EnvironmentFile=/home/venkat/Desktop/fcc_fastapi/.env
+Environment="PATH=/home/venkat/Desktop/fcc_fastapi/.venv/bin:$PATH"
+ExecStart=/home/venkat/Desktop/fcc_fastapi/.venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 127.0.0.1:8000
+
+[Install]
+WantedBy=multi-user.target
